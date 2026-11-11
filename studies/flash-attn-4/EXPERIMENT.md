@@ -14,11 +14,23 @@ The goal needs some definition... here are the subgoals which at some point will
 
 Nov 10:
 
-- It seems like FlashAttention 4 is not exactly built as a general purpose attention accelerator. Based on the can_implement method in flash_attn/cute/flash_bwd_sm90.py, it seems like the implementation is made for a very specific setting of input tensors and architecture (fp16, bf16, multiple of 8 heads, multiple of 16 tokens, multiple of 32 threads, ...).
+- It seems like FlashAttention 4 is not exactly built as a general purpose attention accelerator. Based on the `can_implement` method in `flash_attn/cute/flash_bwd_sm90.py`, it seems like the implementation is made for a very specific setting of input tensors and architecture (fp16, bf16, multiple of 8 head dimension, multiple of 16 kernel tile, multiple of 32 threads, ...).
 
 Nov 11:
 
-- The documented torch.compile problem supports the fact that FlashAttention 4 is not a general purpose attention accelerator. Indeed, given that there were no differentiable ops in some of the FA4 methods, Dynamo (which is the JIT compiler of PyTorch) would insert non-differentiable ops in the graph, which would break the computational graph. Meaning that at compute time, JIT would recompile and still act greedily.
-- The root of this problem is that cuteDSL is not compiled by CPython interpreter, but by the CUTLASS Python compiler (intermediate representation (IR) to GPU binary code) stack which makes it impossible to retrieve the tensors dimensions and dtypes at compile time using PyTorch. This is why when we construct the computational graph, there is a break since without that information, we cannot generate the code for this operation. Thus, the solution was to explicitly define the input and output tensors dimensions and dtypes for both the forward and backward operations and register them as fake ops so that at compile time, JIT would know the dimensions and dtypes of the tensors and be able to generate the code for this operation.
+- The documented torch.compile problem supports the fact that FlashAttention 4 is not a general purpose attention accelerator. Indeed, given that cuteDLS is opaque Dynamo (tracer of torch compile, similar to whatever generates jaxpr for XLA in Jax) it cannot step into the kernel and determine the necessary information (tensors types and shapes) to build the computational graph.
+- The root of this problem is that cuteDSL is not compiled by CPython interpreter, but by the CUTLASS Python compiler (intermediate representation (IR) to GPU binary code) stack which makes it impossible to retrieve the tensors dimensions and dtypes at compile time using PyTorch. This is why when we construct the computational graph, there is a break since without that information, we cannot generate the code for this operation. Thus, the solution was to explicitly define the input and output tensors dimensions and dtypes for both the forward and backward operations (which are the kernel optimized by cuteDLS for attention mechanism) and register them as fake ops so that at compile time, Dyanmo would know the dimensions and dtypes of the tensors and be able to generate the code for this operation and thus not force re-compilation at each foward or backward pass.
 - So the conclusion to this is that cuteDSL does work, however it seems like the solution is hand crafted additional information (in the form of fake ops) so that this FA4 implementation can be used with torch.compile.
-- Now, the solution to this problem will depend on the scope of this project.
+
+# Solution(s) to investigate
+
+Problem in one line: cuteDLS is opaque to Dynamo which makes FA4 not compatible with non-specified worload.
+
+Solution 1: Write explecitely the shapes and dtype for supported workload
+- Limits dramatically the amount of supported workload
+- Not scalable in the long term
+
+Solution 2: Find a way to make cuteDLS transparent to Dynamo. If we are able to get the necessayr information to build the computational graph at compile time, then we can generate the code for this operation and thus not force re-compilation at each foward or backward pass and still use cuteDLS for the kernel optimization.
+
++ This would support a broader range of workloads
+- Not very knowledgeable in the CUTLASS Python compiler stack and the cuteDLS implementation, so not sure if this is possible (but I am more than willing to check this avenue!).
