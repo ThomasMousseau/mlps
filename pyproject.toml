@@ -46,3 +46,6 @@ dev = [
 
 [tool.setuptools]
 packages = []
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "*_test.py", "computational_graph_regression.py"]

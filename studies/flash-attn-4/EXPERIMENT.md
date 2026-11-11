@@ -27,10 +27,17 @@ Nov 11:
 Problem in one line: cuteDSL is opaque to Dynamo which makes FA4 not compatible with non-specified workload.
 
 Solution 1: Write explicitly the shapes and dtype for supported workload
+
 - Limits dramatically the amount of supported workload
 - Not scalable in the long term
 
 Solution 2: Find a way to make cuteDSL transparent to Dynamo. If we are able to get the necessary information to build the computational graph at compile time, then we can generate the code for this operation and thus not force re-compilation at each forward or backward pass and still use cuteDSL for the kernel optimization.
 
 + This would support a broader range of workloads
+
 - Not very knowledgeable in the CUTLASS Python compiler stack and the cuteDSL implementation, so not sure if this is possible (but I am more than willing to check this avenue!).
+
+# WIP
+
+- I am implementing a basic regression test to know when a fwd and bwd implementation creates breaks and more than 1 computational graph
+- I am trying to generate tlpase and nsys traces so I better understand what is happening when the breaks occur. This should be very useful to understand the problem and find a solutions in the future.

@@ -13,3 +13,4 @@ wheels/
 # Projects
 studies/cuda-mps/results
 studies/flash-attn-4/slurm/runs/
+studies/flash-attn-4/traces/

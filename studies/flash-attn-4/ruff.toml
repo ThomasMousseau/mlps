@@ -24,6 +24,13 @@ ignore = [
 
 [lint.per-file-ignores]
 "benchmark.py" = ["T201"] # prints its table
+"capture_traces.py" = [
+    "INP001",  # standalone script, not a package
+    "T201",    # prints the artifact path
+    "S603",    # git, nsys, and tlparse are fixed commands
+    "S607",
+    "PLC0415", # torch imports after TORCH_TRACE is set, and only in the nsys child
+]
 "examples/*.py" = [
     "INP001",  # standalone scripts, not a package
     "T201",    # prints its progress
