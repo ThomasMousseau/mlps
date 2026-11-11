@@ -24,13 +24,13 @@ Nov 11:
 
 # Solution(s) to investigate
 
-Problem in one line: cuteDLS is opaque to Dynamo which makes FA4 not compatible with non-specified worload.
+Problem in one line: cuteDSL is opaque to Dynamo which makes FA4 not compatible with non-specified workload.
 
-Solution 1: Write explecitely the shapes and dtype for supported workload
+Solution 1: Write explicitly the shapes and dtype for supported workload
 - Limits dramatically the amount of supported workload
 - Not scalable in the long term
 
-Solution 2: Find a way to make cuteDLS transparent to Dynamo. If we are able to get the necessayr information to build the computational graph at compile time, then we can generate the code for this operation and thus not force re-compilation at each foward or backward pass and still use cuteDLS for the kernel optimization.
+Solution 2: Find a way to make cuteDSL transparent to Dynamo. If we are able to get the necessary information to build the computational graph at compile time, then we can generate the code for this operation and thus not force re-compilation at each forward or backward pass and still use cuteDSL for the kernel optimization.
 
 + This would support a broader range of workloads
-- Not very knowledgeable in the CUTLASS Python compiler stack and the cuteDLS implementation, so not sure if this is possible (but I am more than willing to check this avenue!).
+- Not very knowledgeable in the CUTLASS Python compiler stack and the cuteDSL implementation, so not sure if this is possible (but I am more than willing to check this avenue!).
