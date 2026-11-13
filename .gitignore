@@ -11,6 +11,7 @@ wheels/
 .ruff_cache
 
 # Projects
+/logs
 studies/cuda-mps/results
 studies/flash-attn-4/slurm/runs/
 studies/flash-attn-4/traces/

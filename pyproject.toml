@@ -49,3 +49,28 @@ packages = []
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py", "computational_graph_regression.py"]
+
+[tool.cluv]
+job_script_path = "scripts/cluv-job.sh"
+results_path = "$SCRATCH/logs/mlps"
+
+[tool.cluv.local]
+env = { SCRATCH = "$HOME/scratch" }
+
+[tool.cluv.sbatch_args]
+nodes = 1
+ntasks = 1
+cpus-per-task = 4
+mem = "32G"
+time = "00:30:00"
+
+[tool.cluv.clusters.fir]
+env = { UV_OFFLINE = "0" }
+sbatch_args = { account = "rrg-bengioy-ad_gpu", gpus = "h100:1" }
+
+[tool.cluv.clusters.nibi]
+env = { UV_OFFLINE = "0" }
+sbatch_args = { account = "rrg-bengioy-ad_gpu", gpus = "h100:1" }
+
+[tool.cluv.clusters.tamia]
+env = { UV_OFFLINE = "1" }

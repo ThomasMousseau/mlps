@@ -112,6 +112,46 @@ cd studies/flash-attn-4 && sbatch slurm/benchmark.sbatch
 The logs and the plots are written to `slurm/` as `<jobid>-stdout.txt`,
 `<jobid>-stderr.txt` and `<jobid>-benchmark-<size>.png`.
 
+### Single-H100 development on Fir and Nibi
+
+From the local repo root, authenticate with `cluv`, check GPU availability,
+and sync the branch. Cluv deploys committed changes through Git.
+
+```bash
+cluv login fir nibi
+cluv status clusters
+cluv sync fir nibi
+```
+
+Open a shell with one full H100 on Nibi. Replace `nibi` with `fir` to use Fir,
+and use your group's GPU account if it differs from the Mila allocation.
+
+```bash
+ssh -tt nibi 'salloc --account=rrg-bengioy-ad_gpu --nodes=1 --ntasks=1 --gpus=h100:1 --cpus-per-task=4 --mem=32G --time=00:30:00'
+```
+
+Inside the allocation, verify the GPU and access to PyPI, then
+install the study dependencies. Cluv mirrors the local repo's path relative to
+your home directory.
+
+```bash
+nvidia-smi --query-gpu=name,memory.total --format=csv
+curl -fsSL --max-time 10 -o /dev/null https://pypi.org/simple/flash-attn-4/
+cd ~/Mila/mlps
+uv sync --locked --extra flash-attn-4
+```
+
+For a batch smoke test from the local repo root, Cluv defaults to one full H100
+on Fir and Nibi.
+
+```bash
+cluv submit nibi -- --extra flash-attn-4 python studies/flash-attn-4/examples/attn.py
+```
+
+TamIA is configured for offline jobs. For an H100 job there, use your PAICE
+account, request `--gpus=h100:4` for the whole node, and install the FA4 extra on
+the login node before submitting.
+
 ## Results
 
 ### System

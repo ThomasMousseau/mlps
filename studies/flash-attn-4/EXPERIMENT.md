@@ -41,3 +41,28 @@ Solution 2: Find a way to make cuteDSL transparent to Dynamo. If we are able to 
 
 - I am implementing a basic regression test to know when a fwd and bwd implementation creates breaks and more than 1 computational graph
 - I am trying to generate tlpase and nsys traces so I better understand what is happening when the breaks occur. This should be very useful to understand the problem and find a solutions in the future.
+
+## Next experiment: compare three compiled attention paths
+
+When SDPA selects Flash Attention, `torch.compile` can capture PyTorch's
+existing attention ops using their metadata and autograd rules. Activating
+FA4 swaps their CUDA implementation to Dao-AILab's CuTeDSL kernels. Calling
+`flash_attn_func` directly exposes FA4's Python code to Dynamo and can cause
+graph breaks. The [local wrapper](examples/attn.py) keeps that code behind
+custom forward and backward ops with `register_fake` metadata.
+
+Start on one H100 with dense BF16 causal self-attention and no dropout. Use
+batch size 8, sequence length 1024, 16 heads, and head dimension 64 for all
+three paths:
+
+1. `torch.compile` with default PyTorch SDPA.
+2. `torch.compile` with SDPA after `activate_flash_attention_impl("FA4")`,
+   forcing `sdpa_kernel(SDPBackend.FLASH_ATTENTION)`.
+3. `torch.compile` with the local `fa4_attn` wrapper calling Dao-AILab's FA4
+   directly.
+
+Use the same QKV values and upstream gradient. Check outputs and gradients,
+and verify the backend that actually ran. Report steady-state training forward
+and backward latency separately after warmup, with speedups relative to default
+SDPA. The comparison between paths 2 and 3 measures the effect of the
+integration path when both use FA4.
